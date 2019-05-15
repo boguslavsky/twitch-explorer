@@ -18,8 +18,9 @@ const nextButton = document.getElementById('next_btn');
 const currentPageElement = document.getElementById('current_page');
 const totalPagesElement = document.getElementById('total_pages');
 
-// TODO explain why we store query globally
+// TODO explain why we store query and offset globally
 let query = '';
+let offset = '';
 
 /**
   * Wrap XMLHttpRequest into Promise
@@ -133,7 +134,7 @@ const cleanStreamList = () => {
     }
 }
 
-const getUrl = offset => {
+const getUrl = () => {
     let url = `?query=${query}`;
     if (offset) {
         url += `&offset=${offset}`;
@@ -141,7 +142,7 @@ const getUrl = offset => {
     return url;
 }
 
-const loadStream = (url, offset) => {
+const loadStream = url => {
     show(loader);
 
     nextButton.disabled = true;
@@ -152,10 +153,6 @@ const loadStream = (url, offset) => {
 
         if (response._total === 0) {
             show(notFoundElement);
-        }
-
-        if (typeof offset === 'undefined') {
-            offset = 0;
         }
 
         currentPageElement.textContent = Math.floor(offset / LIMIT) + 1;
@@ -203,8 +200,11 @@ searchFormElement.addEventListener('submit', event => {
         return;
     }
 
+    offset = 0;
+
     const url = getUrl();
-    history.pushState({query}, null, url);
+    history.pushState({query, offset}, null, url);
+
     loadStream(url);
 });
 
@@ -212,23 +212,27 @@ prevButton.addEventListener('click', () => {
     cleanStreamList();
     hideAllMessages();
 
-    const offset = parseInt(prevButton.value);
-    const url = getUrl(offset);
+    offset = parseInt(prevButton.value);
+
+    const url = getUrl();
     history.pushState({query, offset}, null, url);
-    loadStream(url, offset);
+
+    loadStream(url);
 });
 
 nextButton.addEventListener('click', () => {
     cleanStreamList();
     hideAllMessages();
 
-    const offset = parseInt(nextButton.value);
-    const url = getUrl(offset);
+    offset = parseInt(nextButton.value);
+
+    const url = getUrl();
     history.pushState({query, offset}, null, url);
-    loadStream(url, offset);
+
+    loadStream(url);
 });
 
-window.onpopstate = function(event) {
+window.addEventListener('popstate', event => {
     if (!event.state || typeof event.state.query === 'undefined') {
         return;
     }
@@ -236,12 +240,15 @@ window.onpopstate = function(event) {
     cleanStreamList();
     hideAllMessages();
 
-    searchQueryInput.value = event.state.query;
+    searchQueryInput.value = decodeURI(event.state.query);
     query = event.state.query;
 
+    offset = event.state.offset;
+
     const url = getUrl();
-    loadStream(url, event.state.offset);
-};
+
+    loadStream(url);
+});
 
 // TODO initial loading (dont forget to insert value into input)
 
