@@ -52,8 +52,30 @@ const get = url => {
 };
 
 const formatDate = rawDate => {
-    // TODO implement format like [2d 5h 3min, 5h 3min, 3 min, less 1 minute]
-    return rawDate;
+    const interval = Math.floor(((new Date()).getTime() - (new Date(rawDate)).getTime()) / 1000);
+    const seconds = interval % 60;
+    const minutes = Math.floor(interval / 60) % 60;
+    const hours = Math.floor(interval / 60 / 60) % 24;
+    const days = Math.floor(interval / 60 / 60 / 24);
+
+    let result = '';
+    if (days > 0) {
+        result += `${days}d `;
+    }
+
+    if (hours > 0) {
+        result += `${hours}h `;
+    }
+
+    if (minutes > 0) {
+        result += `${minutes}m `;
+    }
+
+    if (result === '') {
+        result = 'less than a minute';
+    }
+
+    return result;
 }
 
 const formatNumber = rawNumber => {
@@ -97,7 +119,7 @@ const renderStream = data => {
             <img class="stream-thumb" src="${data.preview.medium}">
             <h2 class="stream-title">${data.channel.status}</h2>
             <p class="stream-text">${data.game} - ${formatNumber(data.viewers)} viewers</p>
-            <p class="stream-text">Started ${formatDate(data.created_at)} ago. ${formatNumber(data.channel.views)} views</p>
+            <p class="stream-text">Started ${formatDate(data.created_at)} ago • ${formatNumber(data.channel.views)} views</p>
         </a>
     </li>`;
 }

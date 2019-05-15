@@ -92,7 +92,7 @@ header {
 }
 
 .content-loader {
-    background-image: url('ajax-loader.gif');
+    background-image: url('../images/ajax-loader.gif');
     background-position: 0 0;
     background-repeat: no-repeat;
     height: 16px;
