@@ -133,18 +133,21 @@ const cleanStreamList = () => {
     }
 }
 
-const loadStream = offset => {
+const getUrl = offset => {
+    let url = `?query=${query}`;
+    if (offset) {
+        url += `&offset=${offset}`;
+    }
+    return url;
+}
+
+const loadStream = (url, offset) => {
     show(loader);
 
     nextButton.disabled = true;
     prevButton.disabled = true;
 
-    let url = `?query=${query}&limit=${LIMIT}`;
-    if (offset) {
-        url += `&offset=${offset}`;
-    }
-
-    get(url).then(response => {
+    get(url + `&limit=${LIMIT}`).then(response => {
         totalElement.textContent = response._total;
 
         if (response._total === 0) {
@@ -200,17 +203,45 @@ searchFormElement.addEventListener('submit', event => {
         return;
     }
 
-    loadStream();
+    const url = getUrl();
+    history.pushState({query}, null, url);
+    loadStream(url);
 });
 
 prevButton.addEventListener('click', () => {
     cleanStreamList();
     hideAllMessages();
-    loadStream(parseInt(prevButton.value));
+
+    const offset = parseInt(prevButton.value);
+    const url = getUrl(offset);
+    history.pushState({query, offset}, null, url);
+    loadStream(url, offset);
 });
 
 nextButton.addEventListener('click', () => {
     cleanStreamList();
     hideAllMessages();
-    loadStream(parseInt(nextButton.value));
+
+    const offset = parseInt(nextButton.value);
+    const url = getUrl(offset);
+    history.pushState({query, offset}, null, url);
+    loadStream(url, offset);
 });
+
+window.onpopstate = function(event) {
+    if (!event.state || typeof event.state.query === 'undefined') {
+        return;
+    }
+
+    cleanStreamList();
+    hideAllMessages();
+
+    searchQueryInput.value = event.state.query;
+    query = event.state.query;
+
+    const url = getUrl();
+    loadStream(url, event.state.offset);
+};
+
+// TODO initial loading (dont forget to insert value into input)
+
