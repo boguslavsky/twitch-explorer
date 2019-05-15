@@ -109,13 +109,13 @@ nav {
     padding: 0;
 }
 
-.stream-list-item {
+.stream {
     display: block;
     margin: 0;
     padding: 0;
 }
 
-.stream-list-link {
+.stream-link {
     color: #322f37;
     display: block;
     overflow: hidden;
@@ -124,19 +124,19 @@ nav {
     transition: background-color .15s ease-in-out;
 }
 
-.stream-list-link:hover,
-.stream-list-link:focus {
+.stream-link:hover,
+.stream-link:focus {
     background-color: rgba(100, 65, 164, .25);
     color: #6441a4;
 }
 
-.stream-list-thumb {
+.stream-thumb {
     float: left;
     margin-left: -180px;
     width: 160px;
 }
 
-.stream-list-title {
+.stream-title {
     font-size: 21px;
     font-weight: 500;
     line-height: 1.2;
@@ -144,7 +144,7 @@ nav {
     padding: 0;
 }
 
-.stream-list-description {
+.stream-text {
     margin: 0;
     padding: 0;
 }

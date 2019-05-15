@@ -40,12 +40,12 @@ const formatDate = (rawDate) => {
 
 const renderStream = data => {
     // TODO best way to implement this?
-    return `<li class="stream-list-item">
-        <a class="stream-list-link" href="${data._links.self}" target="_blank">
-            <img src="${data.preview.medium}" class="stream-list-thumb">
-            <h2 class="stream-list-title">${data.channel.status}</h2>
-            <p class="stream-list-description">${data.game} - ${data.viewers} viewers</p>
-            <p class="stream-list-description">Started at: ${formatDate(data.created_at)}, Other description</p>
+    return `<li class="stream">
+        <a class="stream-link" href="${data._links.self}" target="_blank">
+            <img class="stream-thumb" src="${data.preview.medium}">
+            <h2 class="stream-title">${data.channel.status}</h2>
+            <p class="stream-text">${data.game} - ${data.viewers} viewers</p>
+            <p class="stream-text">Started at: ${formatDate(data.created_at)}, Other description</p>
         </a>
     </li>`;
 }
@@ -53,10 +53,12 @@ const renderStream = data => {
 const loadStream = query => {
     // TODO loader ON
     // TODO clean streams
-    get(`?query=${query}`).then(response => {
+    prevBtn.disabled = true;
+    nextBtn.disabled = true;
+    get(`?query=${query}`).then(response => { // pass other pagination params here
         total.textContent = response._total
-        // TODO _links.self
-        // TODO _links.next
+        // TODO if next available: nextBtn.disabled = false;
+        // TODO if prev available: prevBtn.disabled = false;
         let streams = ''; // TODO explain why we do this
         response.streams.forEach(stream => {
             streams += renderStream(stream)
@@ -76,4 +78,12 @@ searchForm.addEventListener('submit', event => {
         // TODO show error
     }
     loadStream(encodeURI(value));
+});
+
+prevBtn.addEventListener('click', () => {
+    // load next
+});
+
+nextBtn.addEventListener('click', () => {
+    // load prev
 });
