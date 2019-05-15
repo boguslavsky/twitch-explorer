@@ -96,12 +96,6 @@ const hide = element => {
     }
 }
 
-const hideAllMessages = () => {
-    hide(welcomeElement);
-    hide(notFoundElement);
-    hide(errorElement);
-}
-
 const show = element => {
     if (element.classList.contains(HIDDEN_CLASS)) {
         element.classList.remove(HIDDEN_CLASS);
@@ -126,12 +120,15 @@ const renderStream = data => {
 }
 
 // TODO explain that this is safe and correct way to remove all child elements
-const cleanStreamList = () => {
+const cleanContent = () => {
     let child = streamListElement.lastElementChild;
     while (child) {
         streamListElement.removeChild(child);
         child = streamListElement.lastElementChild;
     }
+    hide(welcomeElement);
+    hide(notFoundElement);
+    hide(errorElement);
 }
 
 const getUrl = () => {
@@ -184,8 +181,7 @@ const loadStream = url => {
 searchFormElement.addEventListener('submit', event => {
     event.preventDefault();
 
-    cleanStreamList();
-    hideAllMessages();
+    cleanContent();
 
     const value = searchQueryInput.value;
     if (value === '') {
@@ -209,8 +205,7 @@ searchFormElement.addEventListener('submit', event => {
 });
 
 prevButton.addEventListener('click', () => {
-    cleanStreamList();
-    hideAllMessages();
+    cleanContent();
 
     offset = parseInt(prevButton.value);
 
@@ -221,8 +216,7 @@ prevButton.addEventListener('click', () => {
 });
 
 nextButton.addEventListener('click', () => {
-    cleanStreamList();
-    hideAllMessages();
+    cleanContent();
 
     offset = parseInt(nextButton.value);
 
@@ -237,10 +231,9 @@ window.addEventListener('popstate', event => {
         return;
     }
 
-    cleanStreamList();
-    hideAllMessages();
+    cleanContent();
 
-    searchQueryInput.value = decodeURI(event.state.query);
+    searchQueryInput.value = decodeURI(event.state.query); // TODO catch error
     query = event.state.query;
 
     offset = event.state.offset;
