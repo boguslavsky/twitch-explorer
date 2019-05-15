@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Twitch explorer</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <div class="layout">
+    <header>
+      <form id="search_form">
+        <input id="search_query" class="form-control form-field" type="text" placeholder="Search query..." autocomplete="off">
+        <input class="form-control form-button" type="submit" value="Search">
+      </form>
+    </header>
+
+    <div class="content">
+      <nav>
+        <div class="total">
+          Total results: <span id="total">-</span>
+        </div>
+        <div class="pagination">
+          <button id="prev_btn">&laquo;</button>
+          <span id="current_page">1</span>/<span id="total_pages">10</span>
+          <button id="next_btn">&raquo;</button>
+        </div>
+      </nav>
+      
+      <ul id="stream_list" class="stream-list"></ul>
+    </div>
+  </div>
+
+  <script src="bundle.js"></script>
+
+</body>
+</html
