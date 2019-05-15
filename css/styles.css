@@ -166,7 +166,7 @@ nav {
 .pagination button:disabled:focus {
     background-color: transparent;
     border: 1px solid #dee2e6;
-    color: #999;
+    color: #ccc;
     cursor: not-allowed;
 }
 
