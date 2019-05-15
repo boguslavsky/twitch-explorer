@@ -1,14 +1,25 @@
+const HIDDEN_CLASS = 'hidden';
 const BASE_URL = 'https://api.twitch.tv/kraken/search/streams';
 const CLIENT_ID = 'rnol6rl7vokxusycd1dk7rqbddb2nw';
+const LIMIT = 10;
+const EMPTY_SEARCH_RESULT_MESSAGE = 'The search query cannot be empty.';
+const INVALID_SEARCH_QUERY_MESSAGE = 'An error occurred while processing a search query. Incorrect characters were used.';
 
-const streamList = document.getElementById('stream_list');
-const searchForm = document.getElementById('search_form');
-const searchQuery = document.getElementById('search_query');
-const total = document.getElementById('total');
-const prevBtn = document.getElementById('prev_btn');
-const nextBtn = document.getElementById('next_btn');
-const currentPage = document.getElementById('current_page');
-const totalPages = document.getElementById('total_pages');
+const loader = document.getElementById('loader');
+const welcomeElement = document.getElementById('welcome_msg');
+const notFoundElement = document.getElementById('not_found_msg');
+const errorElement = document.getElementById('error_msg');
+const streamListElement = document.getElementById('stream_list');
+const searchFormElement = document.getElementById('search_form');
+const searchQueryInput = document.getElementById('search_query');
+const totalElement = document.getElementById('total');
+const prevButton = document.getElementById('prev_btn');
+const nextButton = document.getElementById('next_btn');
+const currentPageElement = document.getElementById('current_page');
+const totalPagesElement = document.getElementById('total_pages');
+
+// TODO explain why we store query globally
+let query = '';
 
 /**
   * Wrap XMLHttpRequest into Promise
@@ -24,6 +35,13 @@ const get = url => {
 			if (xhr.status === 200) {
 				resolve(xhr.response);
 			} else {
+                // Check if there is an error message in the server response
+                if (xhr.response.error) {
+                    reject(new Error(`Error ${xhr.status}: ${xhr.response.error}`));
+                    return;
+                }
+
+                // Otherwise, throw error status information
 				reject(new Error(`Error ${xhr.status}: ${xhr.statusText}`));
 			}
 		};
@@ -33,57 +51,144 @@ const get = url => {
 	});
 };
 
-const formatDate = (rawDate) => {
-    // TODO implement format like 3 min ago / less 1 minute ago
+const formatDate = rawDate => {
+    // TODO implement format like [2d 5h 3min, 5h 3min, 3 min, less 1 minute]
     return rawDate;
+}
+
+const formatNumber = rawNumber => {
+    const number = [];
+    rawNumber.toString().split('').reverse().forEach((value, index) => {
+        if (index > 0 && index % 3 === 0) {
+            number.push(',');
+        }
+        number.push(value);
+    });
+    return number.reverse().join('');
+}
+
+const hide = element => {
+    if (!element.classList.contains(HIDDEN_CLASS)) {
+        element.classList.add(HIDDEN_CLASS);
+    }
+}
+
+const hideAllMessages = () => {
+    hide(welcomeElement);
+    hide(notFoundElement);
+    hide(errorElement);
+}
+
+const show = element => {
+    if (element.classList.contains(HIDDEN_CLASS)) {
+        element.classList.remove(HIDDEN_CLASS);
+    }
+}
+
+const showError = message => {
+    errorElement.textContent = message;
+    show(errorElement);
 }
 
 const renderStream = data => {
     // TODO best way to implement this?
     return `<li class="stream">
-        <a class="stream-link" href="${data._links.self}" target="_blank">
+        <a class="stream-link" href="${data.channel.url}" target="_blank">
             <img class="stream-thumb" src="${data.preview.medium}">
             <h2 class="stream-title">${data.channel.status}</h2>
-            <p class="stream-text">${data.game} - ${data.viewers} viewers</p>
-            <p class="stream-text">Started at: ${formatDate(data.created_at)}, Other description</p>
+            <p class="stream-text">${data.game} - ${formatNumber(data.viewers)} viewers</p>
+            <p class="stream-text">Started ${formatDate(data.created_at)} ago. ${formatNumber(data.channel.views)} views</p>
         </a>
     </li>`;
 }
 
-const loadStream = query => {
-    // TODO loader ON
-    // TODO clean streams
-    prevBtn.disabled = true;
-    nextBtn.disabled = true;
-    get(`?query=${query}`).then(response => { // pass other pagination params here
-        total.textContent = response._total
-        // TODO if next available: nextBtn.disabled = false;
-        // TODO if prev available: prevBtn.disabled = false;
+// TODO explain that this is safe and correct way to remove all child elements
+const cleanStreamList = () => {
+    let child = streamListElement.lastElementChild;
+    while (child) {
+        streamListElement.removeChild(child);
+        child = streamListElement.lastElementChild;
+    }
+}
+
+const loadStream = offset => {
+    show(loader);
+
+    nextButton.disabled = true;
+    prevButton.disabled = true;
+
+    let url = `?query=${query}&limit=${LIMIT}`;
+    if (offset) {
+        url += `&offset=${offset}`;
+    }
+
+    get(url).then(response => {
+        totalElement.textContent = response._total;
+
+        if (response._total === 0) {
+            show(notFoundElement);
+        }
+
+        if (typeof offset === 'undefined') {
+            offset = 0;
+        }
+
+        currentPageElement.textContent = Math.floor(offset / LIMIT) + 1;
+        totalPagesElement.textContent = Math.ceil(response._total / LIMIT);
+        
+        if (offset + LIMIT < response._total) {
+            nextButton.disabled = false;
+            nextButton.value = offset + LIMIT;
+        }
+
+        if (offset - LIMIT >= 0) {
+            prevButton.disabled = false;
+            prevButton.value = offset - LIMIT;
+        }
+
         let streams = ''; // TODO explain why we do this
         response.streams.forEach(stream => {
-            streams += renderStream(stream)
+            streams += renderStream(stream);
         });
-        streamList.insertAdjacentHTML('afterbegin', streams);
-        // TODO loader OFF
+        streamListElement.insertAdjacentHTML('afterbegin', streams);
+
+        hide(loader);
     }).catch(error => {
-        // TODO show error
-        // TODO loader OFF
+        showError(error.message);
+        hide(loader);
     });
 }
 
-searchForm.addEventListener('submit', event => {
+searchFormElement.addEventListener('submit', event => {
     event.preventDefault();
-    const value = searchQuery.value;
+
+    cleanStreamList();
+    hideAllMessages();
+
+    const value = searchQueryInput.value;
     if (value === '') {
-        // TODO show error
+        showError(EMPTY_SEARCH_RESULT_MESSAGE);
+        return;
     }
-    loadStream(encodeURI(value));
+
+    try {
+        query = encodeURI(value);
+    } catch (e) {
+        showError(INVALID_SEARCH_QUERY_MESSAGE);
+        return;
+    }
+
+    loadStream();
 });
 
-prevBtn.addEventListener('click', () => {
-    // load next
+prevButton.addEventListener('click', () => {
+    cleanStreamList();
+    hideAllMessages();
+    loadStream(parseInt(prevButton.value));
 });
 
-nextBtn.addEventListener('click', () => {
-    // load prev
+nextButton.addEventListener('click', () => {
+    cleanStreamList();
+    hideAllMessages();
+    loadStream(parseInt(nextButton.value));
 });
