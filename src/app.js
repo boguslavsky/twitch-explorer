@@ -233,7 +233,7 @@ window.addEventListener('popstate', event => {
 
     cleanContent();
 
-    searchQueryInput.value = decodeURI(event.state.query); // TODO catch error
+    searchQueryInput.value = decodeURI(event.state.query);
     query = event.state.query;
 
     offset = event.state.offset;
@@ -243,5 +243,14 @@ window.addEventListener('popstate', event => {
     loadStream(url);
 });
 
-// TODO initial loading (dont forget to insert value into input)
+(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    query = urlParams.get('query');
+    offset = urlParams.get('offset');
 
+    if (query) {
+        cleanContent();
+        const url = getUrl();
+        loadStream(url);
+    }
+})();
