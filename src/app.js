@@ -98,12 +98,18 @@ const formatNumber = rawNumber => {
     return number.reverse().join('');
 }
 
+/**
+ * Hide DOM element using class name
+ */
 const hide = element => {
     if (!element.classList.contains(HIDDEN_CLASS)) {
         element.classList.add(HIDDEN_CLASS);
     }
 }
 
+/**
+ * Show DOM element using class name
+ */
 const show = element => {
     if (element.classList.contains(HIDDEN_CLASS)) {
         element.classList.remove(HIDDEN_CLASS);
@@ -129,7 +135,28 @@ const renderStream = data => {
     </li>`;
 }
 
-const cleanContent = () => {
+/**
+ * Build search query string
+ */
+const getQueryString = () => {
+    let str = `?query=${query}`;
+    if (offset) {
+        str += `&offset=${offset}`;
+    }
+    return str;
+}
+
+/**
+ * Load streams using query parameter
+ */
+const loadStream = () => {
+    show(loader);
+
+    // Hide all messages
+    hide(welcomeElement);
+    hide(notFoundElement);
+    hide(errorElement);
+
     // Remove all streams in a safe way
     let child = streamListElement.lastElementChild;
     while (child) {
@@ -137,31 +164,13 @@ const cleanContent = () => {
         child = streamListElement.lastElementChild;
     }
 
-    // Hide all messages
-    hide(welcomeElement);
-    hide(notFoundElement);
-    hide(errorElement);
-}
-
-const getUrl = () => {
-    let url = `?query=${query}`;
-    if (offset) {
-        url += `&offset=${offset}`;
-    }
-    return url;
-}
-
-/**
- * Load streams using query parameter
- */
-const loadStream = url => {
-    show(loader);
-
     nextButton.disabled = true;
     prevButton.disabled = true;
 
+    const url = `${BASE_URL}${getQueryString()}&limit=${LIMIT}`;
+
     // API documentation: https://dev.twitch.tv/docs/v5/reference/search/#search-streams
-    get(`${BASE_URL}${url}&limit=${LIMIT}`).then(response => {
+    get(url).then(response => {
         totalElement.textContent = response._total;
 
         if (response._total === 0) {
@@ -207,7 +216,7 @@ const loadStream = url => {
 searchFormElement.addEventListener('submit', event => {
     event.preventDefault();
 
-    const value = searchQueryInput.value;
+    const value = searchQueryInput.value.trim();
     if (value === '') {
         showError(EMPTY_SEARCH_RESULT_MESSAGE);
         return;
@@ -220,39 +229,29 @@ searchFormElement.addEventListener('submit', event => {
         return;
     }
 
-    cleanContent();
-
     offset = 0;
 
-    const url = getUrl();
-    history.pushState({query, offset}, null, url);
-    loadStream(url);
+    const queryString = getQueryString();
+    history.pushState({query, offset}, null, queryString);
+    loadStream();
 });
 
 /**
  * Handle click on "Prev" button
  */
 prevButton.addEventListener('click', () => {
-    cleanContent();
-
     offset = parseInt(prevButton.value);
-
-    const url = getUrl();
-    history.pushState({query, offset}, null, url);
-    loadStream(url);
+    history.pushState({query, offset}, null, getQueryString());
+    loadStream();
 });
 
 /**
  * Handle click on "Next" button
  */
 nextButton.addEventListener('click', () => {
-    cleanContent();
-
     offset = parseInt(nextButton.value);
-
-    const url = getUrl();
-    history.pushState({query, offset}, null, url);
-    loadStream(url);
+    history.pushState({query, offset}, null, getQueryString());
+    loadStream();
 });
 
 /**
@@ -263,14 +262,10 @@ window.addEventListener('popstate', event => {
         return;
     }
 
-    cleanContent();
-
     searchQueryInput.value = decodeURI(event.state.query);
     query = event.state.query;
     offset = event.state.offset;
-
-    const url = getUrl();
-    loadStream(url);
+    loadStream();
 });
 
 /**
@@ -289,9 +284,5 @@ window.addEventListener('popstate', event => {
     searchQueryInput.value = decodeURI(queryParam);
     query = queryParam;
     offset = offsetParam ? parseInt(offsetParam) : 0;
-
-    
-    cleanContent();
-    const url = getUrl();
-    loadStream(url);
+    loadStream();
 })();
