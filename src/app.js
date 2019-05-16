@@ -114,7 +114,7 @@ const renderStream = data => {
             <img class="stream-thumb" src="${data.preview.medium}">
             <h2 class="stream-title">${data.channel.status}</h2>
             <p class="stream-text">${data.game} - ${formatNumber(data.viewers)} viewers</p>
-            <p class="stream-text">Started ${formatDate(data.created_at)} ago • ${formatNumber(data.channel.views)} views</p>
+            <p class="stream-text">${data.channel.name} • started ${formatDate(data.created_at)} ago • ${formatNumber(data.channel.views)} total views</p>
         </a>
     </li>`;
 }
@@ -200,7 +200,6 @@ searchFormElement.addEventListener('submit', event => {
 
     const url = getUrl();
     history.pushState({query, offset}, null, url);
-
     loadStream(url);
 });
 
@@ -211,7 +210,6 @@ prevButton.addEventListener('click', () => {
 
     const url = getUrl();
     history.pushState({query, offset}, null, url);
-
     loadStream(url);
 });
 
@@ -222,7 +220,6 @@ nextButton.addEventListener('click', () => {
 
     const url = getUrl();
     history.pushState({query, offset}, null, url);
-
     loadStream(url);
 });
 
@@ -235,18 +232,25 @@ window.addEventListener('popstate', event => {
 
     searchQueryInput.value = decodeURI(event.state.query);
     query = event.state.query;
-
     offset = event.state.offset;
 
     const url = getUrl();
-
     loadStream(url);
 });
 
 (() => {
     const urlParams = new URLSearchParams(window.location.search);
-    query = urlParams.get('query');
-    offset = urlParams.get('offset');
+    const queryParam = urlParams.get('query');
+    const offsetParam = urlParams.get('offset');
+
+    searchQueryInput.value = decodeURI(queryParam);
+    query = queryParam;
+    
+    if (offsetParam) {
+        offset = parseInt(offsetParam);
+    } else {
+        offset = 0;
+    }
 
     if (query) {
         cleanContent();

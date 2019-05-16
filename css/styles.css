@@ -125,6 +125,7 @@ nav {
 /* Pagination elements group */
 .pagination {
     display: flex;
+    margin: -1px 0 0;
 }
 
 .pagination-item {
@@ -188,9 +189,15 @@ nav {
     cursor: pointer;
     display: block;
     overflow: hidden;
-    padding: 15px 20px 15px 200px;
+    padding: 120px 20px 15px 20px;
     text-decoration: none;
     transition: background-color .15s;
+}
+
+@media (min-width: 576px) {
+    .stream-link {
+        padding: 15px 20px 15px 200px;
+    }
 }
 
 .stream-link:hover,
@@ -201,8 +208,14 @@ nav {
 .stream-thumb {
     float: left;
     height: 90px;
-    margin-left: -180px;
+    margin: -105px 0 0 0;
     width: 160px;
+}
+
+@media (min-width: 576px) {
+    .stream-thumb {
+        margin: 0 0 0 -180px;
+    }
 }
 
 .stream-title {
