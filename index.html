@@ -15,6 +15,7 @@
       <form id="search_form">
         <input id="search_query" class="form-control form-field" type="text" placeholder="Search query..." autocomplete="off">
         <input class="form-control form-button" type="submit" value="Search">
+        <span id="error_msg" class="form-error hidden"></span>
       </form>
     </header>
 
@@ -35,8 +36,7 @@
       <div id="loader" class="content-loader hidden"></div>
 
       <p id="welcome_msg" class="content-message">Search for streams using channel description or game name.</p>
-      <p id="not_found_msg" class="content-message hidden">No streams found for your search query.<br>Try to use a channel description or game name.</p>
-      <p id="error_msg" class="content-error hidden"></p>
+      <p id="not_found_msg" class="content-message hidden">No streams found for your search query. Try to use a channel description or game name.</p>
     </div>
   </div>
 

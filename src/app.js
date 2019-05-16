@@ -1,10 +1,13 @@
+// Define application constants
 const HIDDEN_CLASS = 'hidden';
 const BASE_URL = 'https://api.twitch.tv/kraken/search/streams';
 const CLIENT_ID = 'rnol6rl7vokxusycd1dk7rqbddb2nw';
 const LIMIT = 10;
 const EMPTY_SEARCH_RESULT_MESSAGE = 'The search query cannot be empty.';
 const INVALID_SEARCH_QUERY_MESSAGE = 'An error occurred while processing a search query. Incorrect characters were used.';
+const NO_VALUE_TEXT = '−';
 
+// Define all application controls
 const loader = document.getElementById('loader');
 const welcomeElement = document.getElementById('welcome_msg');
 const notFoundElement = document.getElementById('not_found_msg');
@@ -18,17 +21,17 @@ const nextButton = document.getElementById('next_btn');
 const currentPageElement = document.getElementById('current_page');
 const totalPagesElement = document.getElementById('total_pages');
 
-// TODO explain why we store query and offset globally
+// Define variables to store current search query and offset
 let query = '';
 let offset = '';
 
 /**
-  * Wrap XMLHttpRequest into Promise
-*/
+ * Define function for GET requests
+ */
 const get = url => {
 	return new Promise((resolve, reject) => {
 		const xhr = new XMLHttpRequest();
-		xhr.open('GET', `${BASE_URL}${url}`);
+		xhr.open('GET', url);
         xhr.responseType = 'json';
         xhr.setRequestHeader('Client-ID', CLIENT_ID);
 		xhr.send();
@@ -52,9 +55,11 @@ const get = url => {
 	});
 };
 
-const formatDate = rawDate => {
+/**
+ * Get human readable time from now
+ */
+const fromNow = rawDate => {
     const interval = Math.floor(((new Date()).getTime() - (new Date(rawDate)).getTime()) / 1000);
-    const seconds = interval % 60;
     const minutes = Math.floor(interval / 60) % 60;
     const hours = Math.floor(interval / 60 / 60) % 24;
     const days = Math.floor(interval / 60 / 60 / 24);
@@ -79,6 +84,9 @@ const formatDate = rawDate => {
     return result;
 }
 
+/**
+ * Add thousands separators into number. Resulting format is 4,294,967,295
+ */
 const formatNumber = rawNumber => {
     const number = [];
     rawNumber.toString().split('').reverse().forEach((value, index) => {
@@ -107,25 +115,29 @@ const showError = message => {
     show(errorElement);
 }
 
+/**
+ * Stream template
+ */
 const renderStream = data => {
-    // TODO best way to implement this?
     return `<li class="stream">
         <a class="stream-link" href="${data.channel.url}" target="_blank">
             <img class="stream-thumb" src="${data.preview.medium}">
             <h2 class="stream-title">${data.channel.status}</h2>
             <p class="stream-text">${data.game} - ${formatNumber(data.viewers)} viewers</p>
-            <p class="stream-text">${data.channel.name} • started ${formatDate(data.created_at)} ago • ${formatNumber(data.channel.views)} total views</p>
+            <p class="stream-text">${data.channel.name} • started ${fromNow(data.created_at)} ago • ${formatNumber(data.channel.views)} total views</p>
         </a>
     </li>`;
 }
 
-// TODO explain that this is safe and correct way to remove all child elements
 const cleanContent = () => {
+    // Remove all streams in a safe way
     let child = streamListElement.lastElementChild;
     while (child) {
         streamListElement.removeChild(child);
         child = streamListElement.lastElementChild;
     }
+
+    // Hide all messages
     hide(welcomeElement);
     hide(notFoundElement);
     hide(errorElement);
@@ -139,33 +151,44 @@ const getUrl = () => {
     return url;
 }
 
+/**
+ * Load streams using query parameter
+ */
 const loadStream = url => {
     show(loader);
 
     nextButton.disabled = true;
     prevButton.disabled = true;
 
-    get(url + `&limit=${LIMIT}`).then(response => {
+    // API documentation: https://dev.twitch.tv/docs/v5/reference/search/#search-streams
+    get(`${BASE_URL}${url}&limit=${LIMIT}`).then(response => {
         totalElement.textContent = response._total;
 
         if (response._total === 0) {
+            currentPageElement.textContent = NO_VALUE_TEXT;
+            totalPagesElement.textContent = NO_VALUE_TEXT;
             show(notFoundElement);
+            hide(loader);
+            return;
         }
 
         currentPageElement.textContent = Math.floor(offset / LIMIT) + 1;
         totalPagesElement.textContent = Math.ceil(response._total / LIMIT);
         
+        // Check "Next" button visibility
         if (offset + LIMIT < response._total) {
             nextButton.disabled = false;
             nextButton.value = offset + LIMIT;
         }
 
+        // Check "Prev" button visibility
         if (offset - LIMIT >= 0) {
             prevButton.disabled = false;
             prevButton.value = offset - LIMIT;
         }
 
-        let streams = ''; // TODO explain why we do this
+        // Write all streams as plain HTML and then append them into streams container
+        let streams = '';
         response.streams.forEach(stream => {
             streams += renderStream(stream);
         });
@@ -178,10 +201,11 @@ const loadStream = url => {
     });
 }
 
+/**
+ * Handle search form submitting
+ */
 searchFormElement.addEventListener('submit', event => {
     event.preventDefault();
-
-    cleanContent();
 
     const value = searchQueryInput.value;
     if (value === '') {
@@ -196,6 +220,8 @@ searchFormElement.addEventListener('submit', event => {
         return;
     }
 
+    cleanContent();
+
     offset = 0;
 
     const url = getUrl();
@@ -203,6 +229,9 @@ searchFormElement.addEventListener('submit', event => {
     loadStream(url);
 });
 
+/**
+ * Handle click on "Prev" button
+ */
 prevButton.addEventListener('click', () => {
     cleanContent();
 
@@ -213,6 +242,9 @@ prevButton.addEventListener('click', () => {
     loadStream(url);
 });
 
+/**
+ * Handle click on "Next" button
+ */
 nextButton.addEventListener('click', () => {
     cleanContent();
 
@@ -223,6 +255,9 @@ nextButton.addEventListener('click', () => {
     loadStream(url);
 });
 
+/**
+ * Handle history entry changes
+ */
 window.addEventListener('popstate', event => {
     if (!event.state || typeof event.state.query === 'undefined') {
         return;
@@ -238,23 +273,25 @@ window.addEventListener('popstate', event => {
     loadStream(url);
 });
 
+/**
+ * Initialize application
+ */
 (() => {
+    // Parse URL params and check if there are params for this application
     const urlParams = new URLSearchParams(window.location.search);
     const queryParam = urlParams.get('query');
     const offsetParam = urlParams.get('offset');
 
-    searchQueryInput.value = decodeURI(queryParam);
-    query = queryParam;
-    
-    if (offsetParam) {
-        offset = parseInt(offsetParam);
-    } else {
-        offset = 0;
+    if (!queryParam) {
+        return;
     }
 
-    if (query) {
-        cleanContent();
-        const url = getUrl();
-        loadStream(url);
-    }
+    searchQueryInput.value = decodeURI(queryParam);
+    query = queryParam;
+    offset = offsetParam ? parseInt(offsetParam) : 0;
+
+    
+    cleanContent();
+    const url = getUrl();
+    loadStream(url);
 })();
