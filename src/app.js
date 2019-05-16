@@ -1,13 +1,10 @@
-// Define application constants
+// App constants
 const HIDDEN_CLASS = 'hidden';
 const TWITCH_API_URL = 'https://api.twitch.tv/kraken/search/streams';
 const CLIENT_ID = 'rnol6rl7vokxusycd1dk7rqbddb2nw';
 const LIMIT = 10;
-const EMPTY_SEARCH_RESULT_MESSAGE = 'The search query cannot be empty.';
-const INVALID_SEARCH_QUERY_MESSAGE = 'An error occurred while processing a search query. Incorrect characters were used.';
-const NO_VALUE_TEXT = '−';
 
-// Define all application controls
+// App controls
 const loader = document.getElementById('loader');
 const welcomeElement = document.getElementById('welcome_msg');
 const notFoundElement = document.getElementById('not_found_msg');
@@ -21,24 +18,26 @@ const nextButton = document.getElementById('next_btn');
 const currentPageElement = document.getElementById('current_page');
 const totalPagesElement = document.getElementById('total_pages');
 
-// Define variables to store current search query and offset
+// Current search query and offset
 let query = '';
 let offset = '';
 
 /**
- * Define function for GET requests
+ * Load strams from Twitch API
+ * API documentation: https://dev.twitch.tv/docs/v5/reference/search/#search-streams
  */
-const get = url => {
-	return new Promise((resolve, reject) => {
-		const xhr = new XMLHttpRequest();
-		xhr.open('GET', url);
+const getStreams = () => {
+    return new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        const url = `${TWITCH_API_URL}${getQueryString()}&limit=${LIMIT}`;
+        xhr.open('GET', url);
         xhr.responseType = 'json';
         xhr.setRequestHeader('Client-ID', CLIENT_ID);
-		xhr.send();
-		xhr.onload = () => {
-			if (xhr.status === 200) {
-				resolve(xhr.response);
-			} else {
+        xhr.send();
+        xhr.onload = () => {
+            if (xhr.status === 200) {
+                resolve(xhr.response);
+            } else {
                 // Check if there is an error message in the server response
                 if (xhr.response.error) {
                     reject(new Error(`Error ${xhr.status}: ${xhr.response.error}`));
@@ -46,13 +45,13 @@ const get = url => {
                 }
 
                 // Otherwise, throw error status information
-				reject(new Error(`Error ${xhr.status}: ${xhr.statusText}`));
-			}
-		};
-		xhr.onerror = () => {
-			reject(new Error('Network error'));
-		};
-	});
+                reject(new Error(`Error ${xhr.status}: ${xhr.statusText}`));
+            }
+        };
+        xhr.onerror = () => {
+            reject(new Error('Network error'));
+        };
+    });
 };
 
 /**
@@ -168,16 +167,13 @@ const loadStream = () => {
     nextButton.disabled = true;
     prevButton.disabled = true;
 
-    const url = `${TWITCH_API_URL}${getQueryString()}&limit=${LIMIT}`;
-
-    // API documentation: https://dev.twitch.tv/docs/v5/reference/search/#search-streams
-    get(url).then(response => {
+    getStreams().then(response => {
         totalElement.textContent = response._total;
 
         // Catch empty response
         if (response._total === 0) {
-            currentPageElement.textContent = NO_VALUE_TEXT;
-            totalPagesElement.textContent = NO_VALUE_TEXT;
+            currentPageElement.textContent = '−';
+            totalPagesElement.textContent = '−';
             show(notFoundElement);
             hide(loader);
             return;
@@ -220,14 +216,14 @@ searchFormElement.addEventListener('submit', event => {
 
     const value = searchQueryInput.value.trim();
     if (value === '') {
-        showError(EMPTY_SEARCH_RESULT_MESSAGE);
+        showError('The search query cannot be empty.');
         return;
     }
 
     try {
         query = encodeURI(value);
     } catch (e) {
-        showError(INVALID_SEARCH_QUERY_MESSAGE);
+        showError('An error occurred while processing a search query. Incorrect characters were used.');
         return;
     }
 
@@ -273,7 +269,7 @@ window.addEventListener('popstate', event => {
  * Initialize application
  */
 (() => {
-    // Parse URL params and check if there are params for this application
+    // Parse URL params and check if there are params for this app
     const urlParams = new URLSearchParams(window.location.search);
     const queryParam = urlParams.get('query');
     const offsetParam = urlParams.get('offset');
