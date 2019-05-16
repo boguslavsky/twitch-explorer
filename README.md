@@ -2,9 +2,11 @@
 
 This small vanilla JS mobile-friendly application gets the query entered by the user in the search box and uses Twitch API to find corresponding streams.
 
-It is possible to use "Next" and "Prev" buttons to navigate through the response list.
+Use "Next" and "Prev" buttons to navigate through the streams list.
 
 Applications use HTML5 History API to support navigation through browser history using browser's "Back" and "Forward" buttons.
+
+It is also possible to refresh the page or share the link without losing the current state.
 
 Application is available at https://boguslavsky.github.io/twitch-explorer/.
 
