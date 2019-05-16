@@ -30,4 +30,4 @@ Finally, build an application:
 npx webpack
 ```
 
-Now it is ready to use. Use [index.html](index.html) as entry point.
+Done. Now use [index.html](index.html) as an entry point.

@@ -1,6 +1,6 @@
 // Define application constants
 const HIDDEN_CLASS = 'hidden';
-const BASE_URL = 'https://api.twitch.tv/kraken/search/streams';
+const TWITCH_API_URL = 'https://api.twitch.tv/kraken/search/streams';
 const CLIENT_ID = 'rnol6rl7vokxusycd1dk7rqbddb2nw';
 const LIMIT = 10;
 const EMPTY_SEARCH_RESULT_MESSAGE = 'The search query cannot be empty.';
@@ -164,15 +164,17 @@ const loadStream = () => {
         child = streamListElement.lastElementChild;
     }
 
+    // Disable pagination
     nextButton.disabled = true;
     prevButton.disabled = true;
 
-    const url = `${BASE_URL}${getQueryString()}&limit=${LIMIT}`;
+    const url = `${TWITCH_API_URL}${getQueryString()}&limit=${LIMIT}`;
 
     // API documentation: https://dev.twitch.tv/docs/v5/reference/search/#search-streams
     get(url).then(response => {
         totalElement.textContent = response._total;
 
+        // Catch empty response
         if (response._total === 0) {
             currentPageElement.textContent = NO_VALUE_TEXT;
             totalPagesElement.textContent = NO_VALUE_TEXT;
@@ -184,19 +186,19 @@ const loadStream = () => {
         currentPageElement.textContent = Math.floor(offset / LIMIT) + 1;
         totalPagesElement.textContent = Math.ceil(response._total / LIMIT);
         
-        // Check "Next" button visibility
+        // Check "Next" button availability
         if (offset + LIMIT < response._total) {
             nextButton.disabled = false;
             nextButton.value = offset + LIMIT;
         }
 
-        // Check "Prev" button visibility
+        // Check "Prev" button availability
         if (offset - LIMIT >= 0) {
             prevButton.disabled = false;
             prevButton.value = offset - LIMIT;
         }
 
-        // Write all streams as plain HTML and then append them into streams container
+        // Combine all streams as plain HTML and then append them into streams container
         let streams = '';
         response.streams.forEach(stream => {
             streams += renderStream(stream);
@@ -230,7 +232,6 @@ searchFormElement.addEventListener('submit', event => {
     }
 
     offset = 0;
-
     const queryString = getQueryString();
     history.pushState({query, offset}, null, queryString);
     loadStream();
